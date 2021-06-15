@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 # author: Pierrick Le Gall (plg)
-# version: 1.0
+# version: 1.1
 # documentation: http://piwigo.org/doc/doku.php?id=user_documentation:tools:piwigo_import_tree
 #
 # usage:
@@ -143,20 +143,41 @@ sub fill_photos_of_album {
     }
 
     piwigo_login();
-    my $response = $ua->post(
-        $conf{base_url}.'/ws.php?format=json',
-        {
-            method => 'pwg.categories.getImages',
-            cat_id => $params{album_id},
-            per_page => 5000,
-        }
-    );
-   print "got response", "\n";
-   my $images;
-   $images = @{from_json($response->content)->{result}{images}};
-   print $images, "\n";
 
-    foreach my $image_href (@{from_json($response->content)->{result}{images}}) {
+    my @list_of_images;
+    my $page = 0;
+    my $per_page = 0;
+    my $count = 0;
+
+    while (1) {
+        print 'retrieving page ', $page, " of album_id ", $params{album_id}, "\n";
+        my $response = $ua->post(
+              $conf{base_url}.'/ws.php?format=json',
+              {
+               method => 'pwg.categories.getImages',
+               cat_id => $params{album_id},
+               per_page => 99999999999,
+               page => $page++,
+               }
+         );
+        # print Dumper(\$response)."\n\n";
+        $per_page = int(from_json($response->content)->{result}{paging}{per_page});
+        print "per_page: ", $per_page, "\n";
+        $count = int(from_json($response->content)->{result}{paging}{count});
+        print "count: ", $count, "\n";
+        push @list_of_images, @{ from_json($response->content)->{result}{images} };
+        if ($count != $per_page) { last };
+    }
+
+   my $nb_images = @list_of_images;
+   print '# of images in album: ', $nb_images, "\n";
+
+   print "got response", "\n";
+   # my $images;
+   # $images = @{from_json($response->content)->{result}{images}};
+   # print $images, "\n";
+
+    foreach my $image_href (@list_of_images) {
         $photos_of_album{ $params{album_id} }{ $image_href->{file} } = $image_href->{id};
     }
 }
