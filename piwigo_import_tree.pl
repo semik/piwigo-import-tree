@@ -48,6 +48,8 @@ GetOptions(
       /
 );
 
+my $dd = '../fotky-album-data';
+
 my $album_dir = $opt{directory};
 $album_dir =~ s{^\./*}{};
 
@@ -199,7 +201,7 @@ sub add_album {
     my $form = {
         method => 'pwg.categories.add',
         name => $params{name},
-        status => 'private',
+#        status => 'private',
     };
 
     if (defined $params{parent}) {
@@ -220,7 +222,7 @@ sub set_album_properties {
 
     print '[set_album_properties] for directory "'.$params{dir}.'"'."\n" if $opt{debug};
 
-    # avoid to load the readme.txt file 10 times if an album has 10
+    # avoid to load the album.txt file 10 times if an album has 10
     # sub-albums
     our %set_album_properties_done;
     if (defined $set_album_properties_done{ $params{id} }) {
@@ -231,73 +233,28 @@ sub set_album_properties {
 
     $params{dir} =~ s{ / }{/}g;
 
-    # is there a file "readme.txt" in the directory of the album?
-    my $desc_filepath = $params{dir}.'/readme.txt';
+    # is there a file "album.txt" in the directory of the album?
+    my $desc_filepath = $dd.'/'.$params{dir}.'/descriptions/album.txt';
 
     if (not -f $desc_filepath) {
-        print "no readme.txt for ".$params{dir}."\n" if $opt{debug};
+        print "no album.txt for ".$params{dir}."\n" if $opt{debug};
         return;
     }
 
-    # example of readme.txt:
-    #
-    # Title: First public opening
-    # Date: 2009-09-26
-    # Copyright: John Connor
-    #
-    # Details:
-    # The first day Croome Court is opened to the public by the National Trust.
-    # And here is another line for details!
-
     open(IN, '<', $desc_filepath);
-    my $title = undef;
-    my $date_string = undef;
-    my $copyright = undef;
-    my $is_details = 0;
     binmode(IN, ":utf8");
     my $details = '';
     while (my $desc_line = <IN>) {
-        chomp($desc_line);
-
-        if ($is_details) {
-            $details.= $desc_line;
-        }
-        elsif ($desc_line =~ /^Date:\s*(.*)$/) {
-            $date_string = $1;
-        }
-        elsif ($desc_line =~ /^Title:\s*(.*)$/) {
-            $title = $1;
-        }
-        elsif ($desc_line =~ /^Copyright:\s*(.*)$/) {
-            $copyright = $1;
-        }
-        elsif ($desc_line =~ /^Details:/) {
-            # from now, all the remaining lines are "details"
-            $is_details = 1;
-        }
+	$details .= $desc_line;
     }
     close(IN);
 
-    if (defined $date_string or $details ne '') {
-        my $comment = '';
-
-        if (defined $date_string) {
-            $comment.= '<span class="albumDate">'.$date_string.'</span><br>';
-        }
-        if (defined $copyright) {
-            $comment.= '<span class="albumCopyright">'.$copyright.'</span><br>';
-        }
-        $comment.= $details;
-
+    if ($details ne '') {
         my $form = {
             method => 'pwg.categories.setInfo',
             category_id => $params{id},
-            comment => $comment,
+            comment => $details,
         };
-
-        if (defined $title) {
-            $form->{name} = $title;
-        }
 
         piwigo_login();
 
@@ -308,28 +265,26 @@ sub set_album_properties {
     }
 }
 
+
 sub set_photo_properties {
     my %params = @_;
 
     print '[set_photo_properties] for "'.$params{path}.'"'."\n" if $opt{debug};
 
-    # is there any title defined in a descript.ion file?
-    my $desc_filepath = dirname($params{path}).'/descript.ion';
+    # is there any comment in former galery?
+    my $photo_filename = basename($params{path});
+    my $desc_filepath = $dd.'/'.dirname($params{path}).'/descriptions/'.$photo_filename.'.txt';
 
     if (not -f $desc_filepath) {
-        print '[set_photo_properties] no descript.ion file'."\n" if $opt{debug};
+        print '[set_photo_properties] no description file'." $desc_filepath \n" if $opt{debug};
         return;
     }
 
     my $property = undef;
-    my $photo_filename = basename($params{path});
     open(IN, '<', $desc_filepath);
     binmode(IN, ":utf8");
     while (my $desc_line = <IN>) {
-        if ($desc_line =~ /^$photo_filename/) {
-            chomp($desc_line);
-            $property = (split /\t/, $desc_line, 2)[1];
-        }
+	$property .= $desc_line;
     }
     close(IN);
 
