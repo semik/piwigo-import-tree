@@ -246,7 +246,7 @@ sub set_album_properties {
     # Title: First public opening
     # Date: 2009-09-26
     # Copyright: John Connor
-    # 
+    #
     # Details:
     # The first day Croome Court is opened to the public by the National Trust.
     # And here is another line for details!
@@ -361,6 +361,18 @@ sub set_photo_properties {
     }
 }
 
+sub local_die {
+    my $function = shift;
+    my $response = shift;
+
+    my $res = from_json($response);
+
+    die sprintf("died: function=%s, %s",
+		$function,
+		join(", ", map { $_."=".$res->{$_}} keys %{$res}));
+};
+
+
 sub add_photo {
     my %params = @_;
 
@@ -390,6 +402,7 @@ sub add_photo {
     );
 
     my $photo_id = from_json($response->content)->{result}{image_id};
+    local_die('add_photo', $response->content) unless ($photo_id);
 
     my $elapsed = tv_interval($t1);
     print ' completed ('.sprintf('%u ms', $elapsed * 1000).', photo '.$photo_id.')'."\n";
