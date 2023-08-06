@@ -62,7 +62,7 @@ The most useful part of this facility is that you can add more albums, images an
 
 Šemík's notes
 -------------
-Modified for importing data from My Photo Gallery 4.0 by fuzzymonkey.org, looong time dead. 
+Modified for importing data from My Photo Gallery 4.0 by fuzzymonkey.org, which is looong time unsuported. 
 
 Usage:
 ```
@@ -70,4 +70,4 @@ cd foto
 find . -maxdepth 1 -mindepth 1 -type d -exec perl ~/proj/piwigo-import-tree/piwigo_import_tree.pl -base_url=https://piwigo.galery.somewhere/ --user=admin --password=password --directory="{}" --reload_properties \;
 ```
 
-To support some HTML tags i did a few modifications to API.
+To support some HTML tags i did [a few modifications to API](import.patch) which should be reverted after import.
