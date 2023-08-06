@@ -19,10 +19,7 @@
 
 use strict;
 use warnings;
-
-# make it compatible with Windows, but breaks Linux
-#use utf8;
-
+use utf8;
 use File::Find;
 use Data::Dumper;
 use File::Basename;
@@ -77,7 +74,8 @@ $ua->default_headers->authorization_basic(
 my $result = undef;
 my $query = undef;
 
-binmode STDOUT, ":encoding(utf-8)";
+binmode(STDOUT, ":utf8");
+binmode(STDIN, ":utf8");
 
 # Login to Piwigo
 piwigo_login();
@@ -256,6 +254,7 @@ sub set_album_properties {
     my $date_string = undef;
     my $copyright = undef;
     my $is_details = 0;
+    binmode(IN, ":utf8");
     my $details = '';
     while (my $desc_line = <IN>) {
         chomp($desc_line);
@@ -325,6 +324,7 @@ sub set_photo_properties {
     my $property = undef;
     my $photo_filename = basename($params{path});
     open(IN, '<', $desc_filepath);
+    binmode(IN, ":utf8");
     while (my $desc_line = <IN>) {
         if ($desc_line =~ /^$photo_filename/) {
             chomp($desc_line);
