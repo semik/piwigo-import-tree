@@ -59,3 +59,15 @@ Run many times to synchronize
 -----------------------------
 
 The most useful part of this facility is that you can add more albums, images and descriptions to the tree structure and then re-run the script when just the new images will be transferred.
+
+Šemík's notes
+-------------
+Modified for importing data from My Photo Gallery 4.0 by fuzzymonkey.org, looong time dead. 
+
+Usage:
+```
+cd foto
+find . -maxdepth 1 -mindepth 1 -type d -exec perl ~/proj/piwigo-import-tree/piwigo_import_tree.pl -base_url=https://piwigo.galery.somewhere/ --user=admin --password=password --directory="{}" --reload_properties \;
+```
+
+To support some HTML tags i did a few modifications to API.
